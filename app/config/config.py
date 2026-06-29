@@ -39,12 +39,22 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440
 
+    # ---- Moderation ----
+    # When true, reviews from registered members are auto-approved and only guest
+    # reviews are held for moderation. When false, ALL reviews require approval.
+    review_auto_approve: bool = True
+
+    # Dev convenience: return the password-reset token in the API response (so the
+    # flow is testable without an email service). Defaults FALSE even in dev —
+    # must be explicitly enabled. Never enable in production.
+    auth_dev_return_reset_token: bool = False
+
     # ---- CORS ----
     cors_origins: str = "http://localhost:3000"
 
     # ---- Seed ----
     seed_admin_name: str = "Admin"
-    seed_admin_email: str = "admin@reviewdibo.local"
+    seed_admin_email: str = "admin@reviewdibo.com"
     seed_admin_password: str = "admin12345"
 
     @property

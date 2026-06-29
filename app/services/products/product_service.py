@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.constants.app_constants import REVIEW_STATUS_APPROVED
 from app.constants.messages import Messages
 from app.modules.products.models import Product
 from app.modules.products.schemas import (
@@ -41,7 +42,11 @@ def list_products(
 
     stmt = (
         select(Product, avg_expr.label("avg_rating"), count_expr.label("review_count"))
-        .outerjoin(Review, Review.product_id == Product.id)
+        # Only approved reviews count toward the aggregates.
+        .outerjoin(
+            Review,
+            (Review.product_id == Product.id) & (Review.status == REVIEW_STATUS_APPROVED),
+        )
         .group_by(Product.id)
         .order_by(Product.created_at.desc())
     )
@@ -83,7 +88,11 @@ def get_product_detail(db: Session, product_id: int) -> ProductDetail:
 
     stmt = (
         select(Review)
-        .where(Review.product_id == product_id)
+        # Public detail shows only approved reviews; aggregates match.
+        .where(
+            (Review.product_id == product_id)
+            & (Review.status == REVIEW_STATUS_APPROVED)
+        )
         .options(joinedload(Review.user))  # eager-load authors -> no N+1
         .order_by(Review.created_at.desc())
     )
@@ -105,6 +114,7 @@ def get_product_detail(db: Session, product_id: int) -> ProductDetail:
                 user_id=r.user_id,
                 rating=r.rating,
                 comment=r.comment,
+                images=list(r.images or []),
                 created_at=r.created_at,
             )
             for r in reviews

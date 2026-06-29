@@ -1,6 +1,7 @@
 """User data/business logic."""
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.constants.messages import Messages
@@ -22,7 +23,15 @@ def get_or_create_user(db: Session, name: str, email: str) -> tuple[User, bool]:
 
     user = User(name=name.strip(), email=normalized)
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Concurrent request created the same email first — return it (idempotent).
+        db.rollback()
+        existing = db.scalar(select(User).where(User.email == normalized))
+        if existing is not None:
+            return existing, False
+        raise
     db.refresh(user)
     return user, True
 

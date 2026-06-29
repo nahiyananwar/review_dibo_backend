@@ -30,9 +30,12 @@ app = FastAPI(
 )
 
 # ---- CORS: allow the Next.js frontend to call the API ----
+# Explicit origins (production) come from CORS_ORIGINS; the regex additionally
+# allows any localhost / 127.0.0.1 port for local development (e.g. :3000, :3001).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,5 +65,5 @@ if __name__ == "__main__":
         "app.app:app",
         host=settings.host,
         port=settings.port,
-        reload=True,
+        reload=settings.is_dev_env,
     )

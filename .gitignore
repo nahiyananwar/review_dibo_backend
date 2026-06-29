@@ -20,7 +20,6 @@ ENV/
 *.db
 *.sqlite
 *.sqlite3
-_smoke.db
 
 # ---- Test / coverage ----
 .pytest_cache/
@@ -45,6 +44,6 @@ Thumbs.db
 output/
 uploads/
 *.log
+
+# ---- Task brief / planning notes (kept out of the public repo) ----
 docs/
-alembic/
-tests/

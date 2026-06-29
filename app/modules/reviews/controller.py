@@ -8,8 +8,8 @@ from app.modules.users.models import User
 from app.services.reviews import ownership_service, review_service
 
 
-def create_review(db: Session, data: ReviewCreate) -> Review:
-    return review_service.create_review(db, data)
+def create_review(db: Session, data: ReviewCreate, current_user: User | None) -> Review:
+    return review_service.create_review(db, data, current_user)
 
 
 def update_review(
@@ -17,7 +17,7 @@ def update_review(
 ) -> Review:
     review = review_service.get_review(db, review_id)
     ownership_service.assert_can_modify(review, current_user)
-    return review_service.update_review(db, review, data)
+    return review_service.update_review(db, review, data, current_user)
 
 
 def delete_review(db: Session, review_id: int, current_user: User) -> None:

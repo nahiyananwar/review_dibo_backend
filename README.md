@@ -104,7 +104,7 @@ python seed.py
 ```
 
 This creates all tables (`init_db`) and inserts an admin account plus demo
-products/users/reviews. Default admin: `admin@reviewdibo.local` / `admin12345`
+products/users/reviews. Default admin: `admin@reviewdibo.com` / `admin12345`
 (override via `SEED_ADMIN_*` in `.env`).
 
 > The committed [`schema.sql`](./schema.sql) is the PostgreSQL DDL for the
@@ -155,12 +155,31 @@ Base path: `/api`. Interactive docs at `/docs`.
 | POST | `/api/auth/register` | public | Register → `{access_token, token_type, user}` |
 | POST | `/api/auth/login` | public | **OAuth2 password form** (`username`=email, `password`) → `{access_token, token_type}` |
 | GET | `/api/auth/me` | auth | Current user from the bearer token |
+| PUT | `/api/auth/me` | auth | Update profile (name / email / avatar; changing email requires `current_password`) |
+| GET | `/api/auth/me/reviews` | auth | Reviews authored by the current user |
+| POST | `/api/auth/forgot-password` | public | Request a password reset (token emailed in prod) |
+| POST | `/api/auth/reset-password` | public | Set a new password with a reset token (single-use) |
 
 ### Admin
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/api/admin/reviews` | admin | List all reviews (moderation table) |
+| GET | `/api/admin/reviews` | admin | List all reviews (every status) |
 | DELETE | `/api/admin/reviews/{id}` | admin | Delete any review (override) |
+| GET | `/api/admin/users` | admin | List all users with review counts |
+| GET | `/api/admin/users/{id}` | admin | A user's profile + their reviews |
+| PATCH | `/api/admin/users/{id}` | admin | Assign a role (`user` / `moderator` / `admin`) |
+| DELETE | `/api/admin/users/{id}` | admin | Delete a user (cascades reviews) |
+
+### Moderation (moderator or admin)
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/api/moderation/reviews?status=` | moderator | Queue filtered by `pending` / `approved` / `rejected` / `all` |
+| GET | `/api/moderation/pending-count` | moderator | Count of reviews awaiting moderation |
+| PATCH | `/api/moderation/reviews/{id}` | moderator | Approve or reject a review |
+
+> **Review moderation:** members' reviews are auto-approved (configurable via
+> `REVIEW_AUTO_APPROVE`); guest reviews are held as `pending` until a moderator
+> approves them. Only `approved` reviews count toward public ratings/listings.
 
 ### Authentication notes
 - Send `Authorization: Bearer <token>` on protected routes.
@@ -176,9 +195,9 @@ Base path: `/api`. Interactive docs at `/docs`.
 
 | Model | Fields |
 |---|---|
-| **User** | `id`, `name`, `email` (unique), `password_hash` (nullable), `is_admin`, `created_at` |
+| **User** | `id`, `name`, `email` (unique), `avatar` (nullable), `role` (`user`/`moderator`/`admin`), `password_hash` (nullable), `token_version`, `created_at` |
 | **Product** | `id`, `title`, `description`, `image_url`, `created_at` |
-| **Review** | `id`, `product_id` →Product, `user_id` →User, `rating` (1–5), `comment`, `created_at` |
+| **Review** | `id`, `product_id` →Product, `user_id` →User, `rating` (1–5), `comment`, `images`, `status` (`pending`/`approved`/`rejected`), `rejection_reason`, `moderated_at`, `created_at` |
 
 `average_rating` and `review_count` are computed on demand from the reviews
 table (never stored), so they can't go stale. Deleting a product or user
@@ -202,12 +221,15 @@ delete, auth (register/login/me), ownership enforcement, and admin moderation.
 
 | Var | Default | Purpose |
 |---|---|---|
+| `APP_ENV` | `development` | Environment name; any non-dev value enforces a strong `SECRET_KEY` |
 | `DATABASE_URL` | `postgresql+psycopg2://…/review_dibo` | SQLAlchemy connection URL |
-| `SECRET_KEY` | _change me_ | JWT signing key |
+| `SECRET_KEY` | _change me_ | JWT signing key (must be ≥32 chars in production) |
 | `ALGORITHM` | `HS256` | JWT algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | Token lifetime |
-| `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins |
+| `REVIEW_AUTO_APPROVE` | `true` | Auto-approve member reviews (guests always pending) |
+| `AUTH_DEV_RETURN_RESET_TOKEN` | `false` | Dev-only: return the reset token in the API response — never enable in prod |
+| `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins (set to your deployed frontend URL) |
 | `HOST` / `PORT` | `0.0.0.0` / `8011` | Bind address |
-| `SEED_ADMIN_NAME/EMAIL/PASSWORD` | `Admin` / `admin@reviewdibo.local` / `admin12345` | Seed admin |
+| `SEED_ADMIN_NAME/EMAIL/PASSWORD` | `Admin` / `admin@reviewdibo.com` / `admin12345` | Seed admin |
 
 See [`.env.example`](./.env.example).

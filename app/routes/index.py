@@ -16,6 +16,7 @@ from fastapi import APIRouter
 from app.constants.app_constants import API_PREFIX
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
+from app.modules.moderation.routes import router as moderation_router
 from app.modules.products.routes import router as products_router
 from app.modules.reviews.routes import router as reviews_router
 from app.modules.users.routes import router as users_router
@@ -27,3 +28,4 @@ main_router.include_router(reviews_router)
 main_router.include_router(users_router)
 main_router.include_router(auth_router)
 main_router.include_router(admin_router)
+main_router.include_router(moderation_router)

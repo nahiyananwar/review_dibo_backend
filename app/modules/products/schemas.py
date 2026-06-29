@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ReviewInProduct(BaseModel):
@@ -18,6 +18,7 @@ class ReviewInProduct(BaseModel):
     user_id: int
     rating: int
     comment: Optional[str] = None
+    images: list[str] = Field(default_factory=list)
     created_at: datetime
 
 
@@ -27,6 +28,14 @@ class ProductCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: Optional[str] = None
     image_url: Optional[str] = Field(default=None, max_length=1024)
+
+    @field_validator("title")
+    @classmethod
+    def _strip_title(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Title must not be blank")
+        return value
 
 
 class ProductListItem(BaseModel):

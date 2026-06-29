@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.config.database import get_db
-from app.middleware.auth import get_current_user
+from app.middleware.auth import get_current_user, get_optional_user
 from app.modules.reviews import controller
 from app.modules.reviews.schemas import ReviewCreate, ReviewOut, ReviewUpdate
 from app.modules.users.models import User
@@ -18,8 +18,12 @@ router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 
 @router.post("", response_model=ReviewOut, status_code=status.HTTP_201_CREATED)
-def create_review(payload: ReviewCreate, db: Session = Depends(get_db)) -> ReviewOut:
-    return controller.create_review(db, payload)
+def create_review(
+    payload: ReviewCreate,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+) -> ReviewOut:
+    return controller.create_review(db, payload, current_user)
 
 
 @router.put("/{review_id}", response_model=ReviewOut)
