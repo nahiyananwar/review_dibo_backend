@@ -233,3 +233,29 @@ delete, auth (register/login/me), ownership enforcement, and admin moderation.
 | `SEED_ADMIN_NAME/EMAIL/PASSWORD` | `Admin` / `admin@reviewdibo.com` / `admin12345` | Seed admin |
 
 See [`.env.example`](./.env.example).
+
+---
+
+## Deployment & keep-alive
+
+Deploy on **Render** (or any host). Set `APP_ENV=production`, a strong `SECRET_KEY`
+(≥32 chars), `DATABASE_URL` (a managed Postgres), and `CORS_ORIGINS=<your Vercel URL>`.
+Start command:
+
+```bash
+uvicorn app.app:app --host 0.0.0.0 --port $PORT
+```
+
+Render's **free** tier spins the service down after ~15 min idle (≈50s cold start
+on the next hit). Two ways to keep it warm by pinging `/health` every ~10 min:
+
+1. **Uptime monitor (recommended — most reliable, free):** create a monitor on
+   [UptimeRobot](https://uptimerobot.com) (5-min interval) or
+   [cron-job.org](https://cron-job.org) pointing at `https://<your-app>/health`.
+2. **GitHub Actions:** [`.github/workflows/keep-alive.yml`](./.github/workflows/keep-alive.yml)
+   pings on a schedule — set the `BACKEND_URL` repo *variable*. Best for **public**
+   repos (Actions is free); on private repos it consumes Actions minutes, so prefer
+   option 1.
+
+> A self-ping from inside the app can't wake it once asleep (the process is gone),
+> so the pinger must be external.

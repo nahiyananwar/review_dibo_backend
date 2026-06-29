@@ -39,6 +39,7 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+SUBMISSION.md
 
 # ---- Runtime artifacts (not used by this project) ----
 output/

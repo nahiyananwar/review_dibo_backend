@@ -1,0 +1,44 @@
+# Render Blueprint for the Review Dibo API (FastAPI + PostgreSQL).
+# Deploy: Render Dashboard → New → Blueprint → pick this repo. It provisions the
+# web service and a free Postgres, and wires DATABASE_URL automatically.
+#
+# After the FIRST deploy, open the service's "Shell" and run once to create the
+# tables and load demo data (admin + products + reviews):
+#     python seed.py
+#
+# Then set CORS_ORIGINS to your Vercel URL (it's left unset on purpose below).
+
+services:
+  - type: web
+    name: review-dibo-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true # Render generates a strong random secret
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: REVIEW_AUTO_APPROVE
+        value: "true"
+      - key: AUTH_DEV_RETURN_RESET_TOKEN
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: review-dibo-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        sync: false # set in the dashboard to your Vercel URL, e.g. https://review-dibo.vercel.app
+
+databases:
+  - name: review-dibo-db
+    plan: free
+    databaseName: review_dibo
+    user: review_dibo

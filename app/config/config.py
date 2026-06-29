@@ -6,7 +6,7 @@ via pydantic-settings. Import the singleton `settings` anywhere it is needed.
 
 from functools import lru_cache
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Environments treated as non-production (relaxed security checks).
@@ -56,6 +56,18 @@ class Settings(BaseSettings):
     seed_admin_name: str = "Admin"
     seed_admin_email: str = "admin@reviewdibo.com"
     seed_admin_password: str = "admin12345"
+
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def _normalize_db_url(cls, value: str) -> str:
+        """Accept the bare ``postgres://`` scheme some hosts inject (e.g. Render).
+
+        SQLAlchemy 2.0 dropped the ``postgres`` dialect alias, so rewrite it to the
+        explicit psycopg2 driver. Other schemes are left untouched.
+        """
+        if value.startswith("postgres://"):
+            return "postgresql+psycopg2://" + value[len("postgres://") :]
+        return value
 
     @property
     def cors_origins_list(self) -> list[str]:
