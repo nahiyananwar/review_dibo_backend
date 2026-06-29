@@ -1,0 +1,50 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ---- Virtual environments ----
+venv/
+.venv/
+env/
+ENV/
+
+# ---- Environment / secrets ----
+.env
+.env.local
+.env.*.local
+
+# ---- Databases (local/dev) ----
+*.db
+*.sqlite
+*.sqlite3
+_smoke.db
+
+# ---- Test / coverage ----
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Build / packaging ----
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- IDE / OS ----
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ---- Runtime artifacts (not used by this project) ----
+output/
+uploads/
+*.log
+docs/
+alembic/
+tests/
